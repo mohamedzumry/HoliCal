@@ -12,7 +12,7 @@ class HolidayDetails : AppCompatActivity() {
 
         var holiName = intent.getStringExtra("HoliName")
         var holiISO = intent.getStringExtra("HoliISO")
-//        var holiDate = intent.getStringExtra("HoliDate")
+        var holiDate = intent.getStringExtra("HoliDate")
 //        var holiMonth = intent.getStringExtra("HoliMonth")
 //        var holiYear = intent.getStringExtra("HoliYear")
         var holiDesc = intent.getStringExtra("HoliDesc")
