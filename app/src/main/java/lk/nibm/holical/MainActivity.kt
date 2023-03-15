@@ -1,12 +1,8 @@
 package lk.nibm.holical
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -15,11 +11,12 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.bumptech.glide.Glide
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import org.json.JSONException
 import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -27,34 +24,50 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    // FusedLocationProviderClient is a class that provides access to the Fused Location Provider API.
-    // The Fused Location Provider API is a system service that provides access to location data.
-    // Declare a lateinit var of type FusedLocationProviderClient
     private lateinit var fusedLocation: FusedLocationProviderClient
-
-    // Declare a variable for the view
-    private lateinit var txtLocation: TextView
-    private lateinit var btnCheckLocation: Button
-
-    // Declare a boolean var and set it to false
-    // This is used to check if the permission is granted or not
-    var isPermissionGranted:Boolean = false
-
-    // Declare a constant for the location request code and set it to 100 (any number will do)
-    // This is used to check the result of the permission request
+    private var isPermissionGranted:Boolean = false
     private val LOCATION_REQUEST_CODE = 100
 
     private lateinit var spnActMainCountry: Spinner
     private lateinit var spnActMainYear : Spinner
 
+    private lateinit var lblTemperature : TextView
+    private  lateinit var lblActMainPressure : TextView
+    private lateinit var lblActMainHumidity : TextView
+    private lateinit var lblActMainWeaType : TextView
+    private lateinit var imgWeaIcon : ImageView
+    private lateinit var lblActMainCityname : TextView
+    private lateinit var lblActMainLatLon: TextView
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportActionBar?.hide()
+
+        // Initialize the fusedLocation var with the FusedLocationProviderClient class
+        // The FusedLocationProviderClient class is used to request location updates and get the last known location.
+        fusedLocation = LocationServices.getFusedLocationProviderClient(this)
+
+        lblActMainLatLon = findViewById(R.id.lblActMainLatLon)
+        // Call the checkLocationPermission() method to check if the app has the permission to access the location of the device
+        // This method call when the app is first launched
+        checkLocationPermission()
+
+        getDevDateTime()
+        getLocation()
 
         // Initialize the Spinner and EditText
         spnActMainCountry = findViewById(R.id.spnActMainCountry)
         spnActMainYear = findViewById(R.id.spnActMainYear)
+
+        // Initialize Weather card TextViews
+        lblActMainCityname = findViewById(R.id.lblActMainCityname)
+        lblTemperature = findViewById(R.id.lblTemperature)
+        lblActMainWeaType = findViewById(R.id.lblActMainWeaType)
+        lblActMainPressure = findViewById(R.id.lblActMainPressure)
+        lblActMainHumidity= findViewById(R.id.lblActMainHumidity)
+        imgWeaIcon= findViewById(R.id.imgWeaIcon)
 
         // Set up the ArrayAdapter for the Spinner
         val countries = arrayOf("Sri Lanka", "United Kingdom", "United States", "Canada", "Australia")
@@ -81,80 +94,63 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent1)
         }
 
-        // Initialize the fusedLocation var with the FusedLocationProviderClient class
-        // The FusedLocationProviderClient class is used to request location updates and get the last known location.
-        fusedLocation = LocationServices.getFusedLocationProviderClient(this)
-
-        // Call the checkLocationPermission() method to check if the app has the permission to access the location of the device
-        // This method call when the app is first launched
-        checkLocationPermission()
-        getDevDateTime()
-
     }
 
-    fun getWhetherData(){
-        var loc = getLocation()
-        var url = "https://api.openweathermap.org/data/2.5/weather?lat=${loc?.latitude}&lon=${loc?.longitude}&appid=882ee6bf596e3c46852c2c851073a175"
+    fun getWeatherData(lat: Double, lon: Double) {
+
+        lateinit var temperature :String
+        lateinit var pressure :String
+        lateinit var humidity : String
+        lateinit var weaType : String
+        lateinit var icon : String
+        lateinit var cityName : String
+
+        var url = "https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=882ee6bf596e3c46852c2c851073a175"
         val request = StringRequest(
             Request.Method.GET,
             url,
-            Response.Listener{ response ->
+            { response ->
                 try {
-                    val jsonObject = JSONObject(response).getJSONObject("response")
-                } catch (e : Error){
+                    // Successfully received weather data from the API
+                    // Parse the JSON response and update the UI with weather details
+                    val weatherData = JSONObject(response)
+                    val mainObject = weatherData.optJSONObject("main")
+                    temperature = mainObject.getString("temp")
+                    pressure = mainObject.getString("pressure")
+                    humidity = mainObject.getString("humidity")
 
+                    val weatherArray = weatherData.getJSONArray("weather")
+                    val weatherObject = weatherArray.getJSONObject(0)
+                    weaType = weatherObject.getString("main")
+                    icon = weatherObject.getString("icon")
+
+                    val sysObject = weatherData.optJSONObject("sys")
+                    cityName = sysObject.getString("name")
+
+                } catch (e: JSONException) {
+                    Toast.makeText(this, "Error in API  : ${e.message}", Toast.LENGTH_LONG).show()
                 }
             },
-            Response.ErrorListener{ error ->
-                Toast.makeText(this, "Error: ${error.message}", Toast.LENGTH_LONG).show()
+            { error ->
+                Toast.makeText(this, "Error in API  : ${error.message}", Toast.LENGTH_LONG).show()
             }
         )
         Volley.newRequestQueue(applicationContext).add(request)
+
+        lblActMainCityname.text = cityName
+        lblTemperature.text = temperature+" 'C"
+        lblActMainWeaType.text = weaType
+        lblActMainPressure.text = "Pressure : "+pressure+" hPa"
+        lblActMainHumidity.text = "Humidity : "+humidity+" %"
+
+        Glide.with(this)
+            .load("https://openweathermap.org/img/w/$icon.png")
+            .into(imgWeaIcon)
     }
 
-    private fun getCountryCode(countryName: String): String? {
-        val locales = Locale.getAvailableLocales()
-
-        for (locale in locales) {
-            val name = locale.displayCountry
-            if (name == countryName) {
-                return locale.country
-            }
-        }
-        return null
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun getDevDateTime(){
-
-        // codes to set current date and time from the device
-        // Get current date and time
-        val currentDateTime = LocalDateTime.now()
-
-        // Set year to TextView
-        val lblActMainCurrYear: TextView = findViewById(R.id.lblActMainCurrYear)
-        lblActMainCurrYear.text = currentDateTime.year.toString()
-
-        // Set month to TextView
-        val lblActMainCurrMonth: TextView = findViewById(R.id.lblActMainCurrMonth)
-        val monthFormatter = DateTimeFormatter.ofPattern("MMMM")
-        lblActMainCurrMonth.text = currentDateTime.format(monthFormatter)
-
-        // Set day to TextView
-        val lblActMainCurrDay: TextView = findViewById(R.id.lblActMainCurrDay)
-        val dayFormatter = DateTimeFormatter.ofPattern("dd")
-        lblActMainCurrDay.text = currentDateTime.format(dayFormatter)
-
-        // Set hour to TextView
-        val lblActMainCurrHM: TextView = findViewById(R.id.lblActMainCurrHM)
-        val hourFormatter = DateTimeFormatter.ofPattern("hh : mm")
-        lblActMainCurrHM.text =  currentDateTime.format(hourFormatter)
-
-    }
 
     @SuppressLint("MissingPermission")
-    private fun getLocation() : Location? {
-        var lastLocation : Location? = null
+    private fun getLocation() {
         // Check if the permission is granted or not
         if (isPermissionGranted){
             // If the permission is granted, then get the last known location of the device
@@ -170,14 +166,17 @@ class MainActivity : AppCompatActivity() {
                 // The last location is the last location that the device was at.
                 if (location.isSuccessful) {
                     // Get the last location of the device
-                    lastLocation = location.result
+                    val lastLocation = location.result
+
+                    lblActMainLatLon.text = "Latitude: ${lastLocation.latitude}, Longitude: ${lastLocation.longitude}"
+
+                    getWeatherData(lastLocation.latitude, lastLocation.longitude)
 
                     // Set the text of the txtLocation to the latitude and longitude of the last location
                     // txtLocation.text = "Latitude: ${lastLocation.latitude}, Longitude: ${lastLocation.longitude}"
                 }
             }
         }
-        return lastLocation
     }
 
     private fun checkLocationPermission() {
@@ -218,5 +217,29 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
+    private fun getCountryCode(countryName: String): String? {
+        val locales = Locale.getAvailableLocales()
 
+        for (locale in locales) {
+            val name = locale.displayCountry
+            if (name == countryName) {
+                return locale.country
+            }
+        }
+        return null
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getDevDateTime(){
+
+        // codes to set current date and time from the device
+        // Get current date and time
+        val currentDateTime = LocalDateTime.now()
+
+        // Set Day, Month & year to TextView
+        val lblActMainCurrDMY: TextView = findViewById(R.id.lblActMainCurrDMY)
+        val monthFormatter = DateTimeFormatter.ofPattern("dd / MMMM / YYYY")
+        lblActMainCurrDMY.text = "Today is -> "+currentDateTime.format(monthFormatter)
+
+    }
 }

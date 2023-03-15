@@ -29,24 +29,24 @@
                 android:layout_height="wrap_content"
                 android:text="April Fool"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-                android:textSize="20sp" />
+                android:textSize="36sp" />
 
             <TextView
                 android:id="@+id/txtLay_holiday_details_HoliISO"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="2dp"
-                android:text="date"
+                android:text="13"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                 android:textColor="#7A7A7A"
-                android:textSize="36sp" />
+                android:textSize="24sp" />
 
             <TextView
                 android:id="@+id/txtLay_holiday_details_HoliPriType"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="2dp"
-                android:text="primary type"
+                android:text="National holiday"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                 android:textColor="#7A7A7A"
                 android:textSize="14sp" />
@@ -83,12 +83,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="2dp"
-                android:text="primary type"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:text="National holiday is given y government..."
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                 android:textColor="#7A7A7A"
-                android:textSize="15sp"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="5dp"/>
+                android:textSize="15sp" />
 
         </LinearLayout>
 
