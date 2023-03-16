@@ -3,6 +3,7 @@ package lk.nibm.holical
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -31,13 +32,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var spnActMainCountry: Spinner
     private lateinit var spnActMainYear : Spinner
 
-    private lateinit var lblTemperature : TextView
-    private  lateinit var lblActMainPressure : TextView
-    private lateinit var lblActMainHumidity : TextView
-    private lateinit var lblActMainWeaType : TextView
-    private lateinit var imgWeaIcon : ImageView
-    private lateinit var lblActMainCityname : TextView
-    private lateinit var lblActMainLatLon: TextView
+    var a:Double?=null
+    var b:Double?=null
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,27 +43,16 @@ class MainActivity : AppCompatActivity() {
 
         // Initialize the fusedLocation var with the FusedLocationProviderClient class
         // The FusedLocationProviderClient class is used to request location updates and get the last known location.
-        fusedLocation = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocation = LocationServices.getFusedLocationProviderClient(this@MainActivity)
 
-        lblActMainLatLon = findViewById(R.id.lblActMainLatLon)
         // Call the checkLocationPermission() method to check if the app has the permission to access the location of the device
         // This method call when the app is first launched
         checkLocationPermission()
-
         getDevDateTime()
-        getLocation()
 
         // Initialize the Spinner and EditText
         spnActMainCountry = findViewById(R.id.spnActMainCountry)
         spnActMainYear = findViewById(R.id.spnActMainYear)
-
-        // Initialize Weather card TextViews
-        lblActMainCityname = findViewById(R.id.lblActMainCityname)
-        lblTemperature = findViewById(R.id.lblTemperature)
-        lblActMainWeaType = findViewById(R.id.lblActMainWeaType)
-        lblActMainPressure = findViewById(R.id.lblActMainPressure)
-        lblActMainHumidity= findViewById(R.id.lblActMainHumidity)
-        imgWeaIcon= findViewById(R.id.imgWeaIcon)
 
         // Set up the ArrayAdapter for the Spinner
         val countries = arrayOf("Sri Lanka", "United Kingdom", "United States", "Canada", "Australia")
@@ -94,63 +79,47 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent1)
         }
 
+        findViewById<Button>(R.id.btnLocation).setOnClickListener {
+            getLocations()
+
+            // Send data to WeatherDetails Activity
+            var intent2 = Intent(this@MainActivity, WeatherDetails::class.java)
+            intent2.putExtra("latitude", b)
+            intent2.putExtra("longitude", a)
+            startActivity(intent2)
+        }
+
     }
 
-    fun getWeatherData(lat: Double, lon: Double) {
-
-        lateinit var temperature :String
-        lateinit var pressure :String
-        lateinit var humidity : String
-        lateinit var weaType : String
-        lateinit var icon : String
-        lateinit var cityName : String
-
-        var url = "https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=882ee6bf596e3c46852c2c851073a175"
-        val request = StringRequest(
-            Request.Method.GET,
-            url,
-            { response ->
-                try {
-                    // Successfully received weather data from the API
-                    // Parse the JSON response and update the UI with weather details
-                    val weatherData = JSONObject(response)
-                    val mainObject = weatherData.optJSONObject("main")
-                    temperature = mainObject.getString("temp")
-                    pressure = mainObject.getString("pressure")
-                    humidity = mainObject.getString("humidity")
-
-                    val weatherArray = weatherData.getJSONArray("weather")
-                    val weatherObject = weatherArray.getJSONObject(0)
-                    weaType = weatherObject.getString("main")
-                    icon = weatherObject.getString("icon")
-
-                    val sysObject = weatherData.optJSONObject("sys")
-                    cityName = sysObject.getString("name")
-
-                } catch (e: JSONException) {
-                    Toast.makeText(this, "Error in API  : ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            },
-            { error ->
-                Toast.makeText(this, "Error in API  : ${error.message}", Toast.LENGTH_LONG).show()
-            }
-        )
-        Volley.newRequestQueue(applicationContext).add(request)
-
-        lblActMainCityname.text = cityName
-        lblTemperature.text = temperature+" 'C"
-        lblActMainWeaType.text = weaType
-        lblActMainPressure.text = "Pressure : "+pressure+" hPa"
-        lblActMainHumidity.text = "Humidity : "+humidity+" %"
-
-        Glide.with(this)
-            .load("https://openweathermap.org/img/w/$icon.png")
-            .into(imgWeaIcon)
-    }
-
+//    @SuppressLint("MissingPermission")
+//    private fun getLocation() : Location {
+//
+//        lateinit var lastLocation : Location
+//
+//        // Check if the permission is granted or not
+//        if (isPermissionGranted){
+//            // If the permission is granted, then get the last known location of the device
+//            // The last known location is the last location that the Fused Location Provider API has access to.
+//            // The last known location is not necessarily the last location that the device was at.
+//            val locationResult = fusedLocation.lastLocation
+//
+//            // Add an OnCompleteListener to the locationResult
+//            // The OnCompleteListener is called when the task is complete and the result is available.
+//            locationResult.addOnCompleteListener(this){location ->
+//                // Check if the location is successful
+//                // If the location is successful, then get the last location of the device
+//                // The last location is the last location that the device was at.
+//                if (location.isSuccessful) {
+//                    // Get the last location of the device
+//                    lastLocation = location.result
+//                }
+//            }
+//        }
+//        return lastLocation
+//    }
 
     @SuppressLint("MissingPermission")
-    private fun getLocation() {
+    private fun getLocations() {
         // Check if the permission is granted or not
         if (isPermissionGranted){
             // If the permission is granted, then get the last known location of the device
@@ -168,12 +137,9 @@ class MainActivity : AppCompatActivity() {
                     // Get the last location of the device
                     val lastLocation = location.result
 
-                    lblActMainLatLon.text = "Latitude: ${lastLocation.latitude}, Longitude: ${lastLocation.longitude}"
-
-                    getWeatherData(lastLocation.latitude, lastLocation.longitude)
-
                     // Set the text of the txtLocation to the latitude and longitude of the last location
-                    // txtLocation.text = "Latitude: ${lastLocation.latitude}, Longitude: ${lastLocation.longitude}"
+                    a = lastLocation.longitude
+                    b = lastLocation.latitude
                 }
             }
         }

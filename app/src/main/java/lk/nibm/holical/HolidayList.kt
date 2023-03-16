@@ -1,6 +1,7 @@
 package lk.nibm.holical
 
 import android.content.Intent
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -10,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
@@ -28,6 +30,12 @@ class HolidayList : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_holiday_list)
+
+        // Get the support action bar
+        supportActionBar?.apply {
+            // Set the background color
+            setBackgroundDrawable(ColorDrawable(ContextCompat.getColor(this@HolidayList, R.color.skyblue)))
+        }
 
         RVHolidayList = findViewById(R.id.RVHolidayList)
         RVHolidayList.layoutManager = LinearLayoutManager(applicationContext, LinearLayoutManager.VERTICAL, false)

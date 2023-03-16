@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
@@ -15,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HoliCal"
         tools:targetApi="31">
+        <activity
+            android:name=".WeatherDetails"
+            android:exported="false" />
         <activity
             android:name=".HolidayDetails"
             android:exported="false" />
