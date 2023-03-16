@@ -51,7 +51,7 @@ class WeatherDetails : AppCompatActivity() {
         lateinit var icon : String
         lateinit var cityName : String
 
-        var url = "https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=882ee6bf596e3c46852c2c851073a175"
+        var url = "https://api.openweathermap.org/data/2.5/weather?lon=79.8478&lat=6.9319&appid=882ee6bf596e3c46852c2c851073a175"
         val request = StringRequest(
             Request.Method.GET,
             url,
@@ -60,7 +60,8 @@ class WeatherDetails : AppCompatActivity() {
                     // Successfully received weather data from the API
                     // Parse the JSON response and update the UI with weather details
                     val weatherData = JSONObject(response)
-                    val mainObject = weatherData.optJSONObject("main")
+                    cityName = weatherData.getString("name")
+                    val mainObject = weatherData.getJSONObject("main")
                     temperature = mainObject.getString("temp")
                     pressure = mainObject.getString("pressure")
                     humidity = mainObject.getString("humidity")
@@ -70,11 +71,10 @@ class WeatherDetails : AppCompatActivity() {
                     weaType = weatherObject.getString("main")
                     icon = weatherObject.getString("icon")
 
-                    val sysObject = weatherData.optJSONObject("sys")
-                    cityName = sysObject.getString("name")
+                    //val sysObject = weatherData.getJSONObject("sys")
 
                     lblActMainCityname.text = cityName
-                    lblTemperature.text = temperature+" 'C"
+                    lblTemperature.text = temperature+" 'F"
                     lblActMainWeaType.text = weaType
                     lblActMainPressure.text = "Pressure : "+pressure+" hPa"
                     lblActMainHumidity.text = "Humidity : "+humidity+" %"
